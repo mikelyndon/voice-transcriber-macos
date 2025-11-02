@@ -3,10 +3,12 @@ import SwiftUI
 @main
 struct VoiceTranscriberApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
+
     var body: some Scene {
-        Settings {
-            SettingsView()
+        // Empty scene - this is a menu bar only app
+        // Settings window is managed by StatusBarController
+        WindowGroup {
+            EmptyView()
         }
     }
 }

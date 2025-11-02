@@ -7,7 +7,8 @@ class StatusBarController: ObservableObject {
     private var transcriptionService: TranscriptionService
     private var keyboardShortcutManager: KeyboardShortcutManager
     private var textInputService: TextInputService
-    
+    private var settingsWindow: NSWindow?
+
     @Published var isRecording = false
     @Published var isProcessing = false
     @Published var lastTranscription = ""
@@ -186,11 +187,32 @@ class StatusBarController: ObservableObject {
     }
     
     @objc private func openSettings() {
-        if #available(macOS 13.0, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        // If window already exists, just bring it to front
+        if let window = settingsWindow {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
         }
+
+        // Create the settings window
+        let settingsView = SettingsView()
+        let hostingController = NSHostingController(rootView: settingsView)
+
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "Settings"
+        window.styleMask = [.titled, .closable, .miniaturizable]
+        window.center()
+        window.setFrameAutosaveName("SettingsWindow")
+        window.isReleasedWhenClosed = false
+
+        // Store reference to window
+        settingsWindow = window
+
+        // Show the window
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        Logger.shared.info("Settings window opened")
     }
     
     @objc private func quit() {

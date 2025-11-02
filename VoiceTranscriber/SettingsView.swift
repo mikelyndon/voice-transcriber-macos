@@ -117,7 +117,3 @@ struct PermissionRow: View {
         .padding(.vertical, 4)
     }
 }
-
-#Preview {
-    SettingsView()
-}
