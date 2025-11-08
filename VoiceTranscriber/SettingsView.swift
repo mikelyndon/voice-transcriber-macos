@@ -3,17 +3,25 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage("selectedModel") private var selectedModel = "mlx-community/parakeet-tdt-0.6b-v2"
     @AppStorage("shortcutKey") private var shortcutKey = "fn"
-    
+    @AppStorage("cleanupEnabled") private var cleanupEnabled = true
+    @AppStorage("cleanupPrompt") private var cleanupPrompt = "general"
+
     private let availableModels = [
         "mlx-community/parakeet-tdt-0.6b-v2",
         "mlx-community/parakeet-tdt-1.1b-v2"
     ]
-    
+
     private let availableShortcuts = [
         "fn": "Fn Key",
         "f13": "F13",
         "f14": "F14",
         "f15": "F15"
+    ]
+
+    private let cleanupPrompts = [
+        "general": "General - Fix formatting and errors",
+        "coding": "Coding - Format code references (@file.py)",
+        "punctuation": "Punctuation - Add proper punctuation only"
     ]
     
     var body: some View {
@@ -43,19 +51,45 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Keyboard Shortcut")
                     .font(.headline)
-                
+
                 Picker("Shortcut Key", selection: $shortcutKey) {
                     ForEach(availableShortcuts.keys.sorted(), id: \.self) { key in
                         Text(availableShortcuts[key] ?? key).tag(key)
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
-                
+
                 Text("Press this key to start/stop recording. Make sure to grant accessibility permissions.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text("AI Text Cleanup")
+                    .font(.headline)
+
+                Toggle("Enable LLM text cleanup", isOn: $cleanupEnabled)
+                    .toggleStyle(.switch)
+
+                if cleanupEnabled {
+                    Picker("Cleanup Style", selection: $cleanupPrompt) {
+                        ForEach(cleanupPrompts.keys.sorted(), id: \.self) { key in
+                            Text(cleanupPrompts[key] ?? key).tag(key)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .padding(.top, 4)
+                }
+
+                Text(cleanupEnabled
+                    ? "Uses a local LLM (Qwen2.5-0.5B) to clean up transcription errors and improve formatting."
+                    : "Transcribed text will be inserted as-is without cleanup.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             Divider()
             
             VStack(alignment: .leading, spacing: 12) {
@@ -87,7 +121,7 @@ struct SettingsView: View {
             }
         }
         .padding(24)
-        .frame(width: 500, height: 400)
+        .frame(width: 550, height: 550)
     }
 }
 

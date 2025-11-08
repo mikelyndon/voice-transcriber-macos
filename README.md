@@ -5,12 +5,14 @@ A real-time voice transcription app for macOS that uses Apple's MLX framework an
 ## Features
 
 - 🎤 **Real-time Voice Transcription** using MLX and Parakeet-TDT-0.6b-v2
+- 🤖 **AI Text Cleanup** - Local LLM post-processing to fix transcription errors and improve formatting
 - ⌨️ **Global Keyboard Shortcuts** (Ctrl+Alt+Cmd+Shift + any key)
 - 📝 **Universal Text Insertion** works in all applications (Terminal, Emacs, Chrome, etc.)
 - 🔄 **Menu Bar Integration** with visual recording status
 - 🐍 **Automatic Python Setup** - no manual configuration required
 - 🎯 **Smart Text Insertion** using clipboard and accessibility APIs
 - ⚡ **Fast and Local** - all processing happens on-device
+- 🎨 **Multiple Cleanup Styles** - General, Coding, Punctuation, and custom prompts
 
 ## Requirements
 
@@ -53,10 +55,11 @@ A real-time voice transcription app for macOS that uses Apple's MLX framework an
 ### First Launch
 The app will automatically:
 1. Create a Python 3.10 virtual environment
-2. Install parakeet-mlx and dependencies
-3. Download the Parakeet model (~150MB)
+2. Install parakeet-mlx, mlx-lm, and dependencies
+3. Download the Parakeet transcription model (~150MB)
+4. Download the Qwen2.5 text cleanup model (~400MB) on first use
 
-This process takes 1-2 minutes on first launch.
+This process takes 1-2 minutes on first launch. The text cleanup model downloads automatically when you first use the cleanup feature.
 
 ### Permissions Required
 The app needs two types of permissions:
@@ -97,8 +100,24 @@ The transcriber works in all text input fields:
 
 1. **Audio Capture** - Records high-quality audio using AVFoundation
 2. **ML Transcription** - Uses Apple's MLX framework with Parakeet-TDT-0.6b-v2 model
-3. **Text Insertion** - Smart insertion via clipboard (Cmd+V) with fallback to key events
-4. **Cross-App Compatible** - Works universally across all macOS applications
+3. **AI Text Cleanup** (Optional) - Post-processes transcription using a local LLM (Qwen2.5-0.5B-Instruct)
+4. **Text Insertion** - Smart insertion via clipboard (Cmd+V) with fallback to key events
+5. **Cross-App Compatible** - Works universally across all macOS applications
+
+### AI Text Cleanup
+
+The app includes an optional AI-powered text cleanup feature that post-processes transcribed text to:
+- Fix transcription errors and formatting issues
+- Convert spoken file references (e.g., "main dot py" → "@main.py" in coding mode)
+- Add proper punctuation and capitalization
+- Format code variable names correctly
+
+**Cleanup Styles:**
+- **General** - Fixes formatting errors and improves readability
+- **Coding** - Formats code references and technical terminology (e.g., "@file.py", "getUserById")
+- **Punctuation** - Adds proper punctuation while keeping words exactly as transcribed
+
+The cleanup uses Qwen2.5-0.5B-Instruct-4bit, an extremely small (300-400MB) and fast quantized model that runs locally on your Mac with minimal performance impact.
 
 ## Project Structure
 
@@ -111,10 +130,13 @@ voice-transcriber/
 │   ├── TranscriptionService.swift
 │   ├── TextInputService.swift
 │   ├── KeyboardShortcutManager.swift
+│   ├── SettingsView.swift
 │   └── Logger.swift
 ├── python/                     # Python transcription server
-│   └── transcription_server.py
+│   ├── transcription_server.py
+│   └── text_cleanup.py         # LLM text cleanup module
 ├── requirements.txt            # Python dependencies
+├── .voice_transcriber_prompts.example.json  # Example custom prompts
 ├── build.sh                   # Build script
 └── README.md
 ```
@@ -124,8 +146,35 @@ voice-transcriber/
 ### Keyboard Shortcut
 The default shortcut is `Ctrl+Alt+Cmd+Shift + any key`. This is intentionally a complex combination to avoid conflicts with other applications.
 
-### Model
+### Transcription Model
 The app uses `mlx-community/parakeet-tdt-0.6b-v2` for transcription. This model provides excellent accuracy for English speech and runs efficiently on Apple Silicon.
+
+### AI Text Cleanup Settings
+Access settings via the menu bar icon → Settings:
+- **Enable/Disable Cleanup** - Toggle the LLM text cleanup feature
+- **Cleanup Style** - Choose between General, Coding, or Punctuation modes
+- **Custom Prompts** - Add your own cleanup styles (see below)
+
+### Custom Cleanup Prompts
+You can create custom cleanup prompts for specific use cases:
+
+1. Copy the example config:
+   ```bash
+   cp .voice_transcriber_prompts.example.json ~/.voice_transcriber_prompts.json
+   ```
+
+2. Edit `~/.voice_transcriber_prompts.json` to add your custom prompts:
+   ```json
+   {
+     "medical": "Your custom prompt for medical transcription...",
+     "legal": "Your custom prompt for legal transcription...",
+     "email": "Your custom prompt for email formatting..."
+   }
+   ```
+
+3. Restart the app to load custom prompts
+
+Custom prompts will appear in the Settings dropdown alongside the built-in options.
 
 ## Troubleshooting
 
@@ -153,6 +202,13 @@ The app uses `mlx-community/parakeet-tdt-0.6b-v2` for transcription. This model 
 - Ensure good microphone quality
 - Record in a quiet environment
 - Keep recordings under 30 seconds for best results
+- Try enabling AI text cleanup in Settings for better formatting
+
+### Text cleanup not working
+- Check that mlx-lm is installed in the Python environment
+- First cleanup may take longer as the model downloads (~400MB)
+- Check `/tmp/voice_transcriber.log` for errors
+- Try disabling cleanup if you prefer raw transcription
 
 ## Development
 
@@ -187,6 +243,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 - **Apple MLX** - Machine learning framework for Apple Silicon
 - **Parakeet-MLX** - Speech recognition model implementation
+- **MLX-LM** - LLM inference library for Apple Silicon
+- **Qwen2.5** - Efficient small language model by Alibaba Cloud
 - **Hugging Face** - Model hosting and community
 
 ## Support
