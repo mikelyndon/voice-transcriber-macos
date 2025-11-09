@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "parakeet-mlx>=0.1.0",
+    "mlx-lm>=0.19.0",
 ]
 
 [tool.uv]

@@ -276,14 +276,23 @@ class TranscriptionService: ObservableObject {
             print("Cannot transcribe: server not ready or already processing")
             return
         }
-        
+
         isProcessing = true
-        
-        let command = [
+
+        // Get cleanup settings from UserDefaults
+        let cleanupEnabled = UserDefaults.standard.bool(forKey: "cleanupEnabled")
+        let cleanupPrompt = UserDefaults.standard.string(forKey: "cleanupPrompt") ?? "general"
+
+        var command: [String: Any] = [
             "action": "transcribe",
             "audio_path": audioPath
         ]
-        
+
+        // Add cleanup prompt if enabled
+        if cleanupEnabled {
+            command["cleanup_prompt"] = cleanupPrompt
+        }
+
         sendCommand(command)
     }
     
